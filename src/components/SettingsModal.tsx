@@ -41,23 +41,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleTestConnection = async () => {
+    const keyToUse = inputKey.trim() || apiKey;
+    if (!keyToUse && !serverHasKey) {
+      setTestResult({
+        success: false,
+        message: 'Por favor, insira ou cole sua chave de API Gemini no campo abaixo antes de testar a conexão.',
+      });
+      return;
+    }
+
+    if (inputKey.trim()) {
+      onApiKeyChange(inputKey.trim());
+    }
+
     setIsTesting(true);
     setTestResult(null);
     try {
+      // 1. Try server endpoint
       const res = await fetch('/api/test-connection', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-gemini-key': inputKey.trim() || apiKey,
+          'x-gemini-key': keyToUse,
         },
-        body: JSON.stringify({ apiKey: inputKey.trim() || apiKey }),
+        body: JSON.stringify({ apiKey: keyToUse }),
       });
       let data: any = null;
       try {
         const text = await res.text();
         data = JSON.parse(text);
       } catch {
-        // Fallback or non-JSON server error
+        // Fallback if server returned non-JSON
       }
 
       if (res.ok && data && data.success) {
@@ -66,39 +80,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           latencyMs: data.latencyMs,
           message: `Conexão bem-sucedida! Latência: ${data.latencyMs}ms. Áudio PCM gerado com sucesso.`,
         });
-      } else {
-        const keyToUse = inputKey.trim() || apiKey;
-        if (keyToUse) {
-          // Direct client test fallback
-          try {
-            const { GoogleGenAI } = await import('@google/genai');
-            const ai = new GoogleGenAI({ apiKey: keyToUse });
-            const start = Date.now();
-            await ai.models.generateContent({
-              model: selectedModel,
-              contents: [{ role: 'user', parts: [{ text: 'Teste' }] }],
-            });
-            const latency = Date.now() - start;
+        return;
+      }
+
+      // 2. Direct client test fallback using the Gemini SDK
+      if (keyToUse) {
+        try {
+          const { GoogleGenAI } = await import('@google/genai');
+          const ai = new GoogleGenAI({ apiKey: keyToUse });
+          const start = Date.now();
+          const testResp = await ai.models.generateContent({
+            model: selectedModel === 'gemini-3.8-flash-tts' ? 'gemini-3.8-flash-tts' : 'gemini-3.8-flash-lite-tts',
+            contents: [{ role: 'user', parts: [{ text: 'Teste de conexão Wish Voice AI.' }] }],
+            config: {
+              responseModalities: ['AUDIO'],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName: 'Fenrir' },
+                },
+              },
+            },
+          });
+          const latency = Date.now() - start;
+          const hasAudio = Boolean(testResp.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data);
+
+          if (hasAudio) {
             setTestResult({
               success: true,
               latencyMs: latency,
-              message: `Conexão direta estabelecida com sucesso! (${latency}ms)`,
+              message: `Conexão direta estabelecida com sucesso! (${latency}ms) — Chave válida e ativa.`,
             });
             return;
-          } catch (clientErr: any) {
-            setTestResult({
-              success: false,
-              message: clientErr?.message || 'Falha ao validar a chave Gemini.',
-            });
-            return;
+          } else {
+            throw new Error('A API respondeu, mas não retornou áudio.');
           }
+        } catch (clientErr: any) {
+          setTestResult({
+            success: false,
+            message: `Erro na validação da chave Gemini: ${clientErr?.message || 'Chave inválida ou serviço indisponível.'}`,
+          });
+          return;
         }
-
-        setTestResult({
-          success: false,
-          message: data?.error || 'Falha ao validar conexão com o serviço Gemini TTS. Verifique a chave de API.',
-        });
       }
+
+      setTestResult({
+        success: false,
+        message: data?.details || data?.error || 'Falha ao validar conexão com o serviço Gemini TTS. Verifique a chave de API.',
+      });
     } catch (err: any) {
       setTestResult({
         success: false,

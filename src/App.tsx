@@ -135,6 +135,12 @@ export default function App() {
       return;
     }
 
+    if (!serverHasKey && !apiKey) {
+      setErrorMessage('Chave Gemini API necessária: Insira sua chave no menu de Configurações (ícone ⚙️ no topo) ou adicione GEMINI_API_KEY nas variáveis da Vercel.');
+      setIsSettingsOpen(true);
+      return;
+    }
+
     setErrorMessage(null);
     if (isPreview) {
       setIsPreviewGenerating(true);
@@ -176,7 +182,11 @@ export default function App() {
         try {
           data = JSON.parse(rawText);
         } catch {
-          serverError = rawText ? `Servidor: ${rawText.slice(0, 120)}` : 'Resposta não JSON do servidor';
+          if (rawText && (rawText.includes('FUNCTION_INVOCATION_FAILED') || rawText.includes('A server error'))) {
+            serverError = 'A função da Vercel precisa da chave GEMINI_API_KEY. Adicione GEMINI_API_KEY no painel da Vercel ou insira sua chave nas Configurações (⚙️).';
+          } else {
+            serverError = rawText ? `Servidor: ${rawText.slice(0, 120)}` : 'Resposta não JSON do servidor';
+          }
         }
 
         if (!response.ok || !data?.success) {
