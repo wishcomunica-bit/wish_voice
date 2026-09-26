@@ -1,0 +1,7 @@
+{
+  "name": "WISH VOICE AI",
+  "description": "Crie locuções profissionais com inteligência artificial para vídeos, eventos e anúncios com direção vocal avançada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

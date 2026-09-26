@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" fill="none">
+  <defs>
+    <!-- Smooth linear gradient matching Wish brand colors -->
+    <linearGradient id="wishGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b000b5" />
+      <stop offset="25%" stop-color="#9333ea" />
+      <stop offset="55%" stop-color="#3b82f6" />
+      <stop offset="85%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+
+    <!-- Arrow specific gradient: electric blue to purple -->
+    <linearGradient id="wishArrowGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="60%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#c026d3" />
+    </linearGradient>
+  </defs>
+
+  <!-- W LOGO MARK -->
+  <path
+    d="M 12 0 
+       H 86 
+       L 132 176 
+       C 134 186, 142 196, 154 196 
+       C 166 196, 174 186, 178 174 
+       L 236 0 
+       H 300 
+       L 242 188 
+       C 232 222, 202 240, 168 240 
+       C 134 240, 106 222, 94 188 
+       L 62 48 
+       L 12 0 Z"
+    fill="url(#wishGradient)"
+  />
+
+  <!-- ARROW ↗ AT UPPER RIGHT -->
+  <g transform="translate(920, 12)">
+    <!-- Diagonal arrow shaft and head -->
+    <path
+      d="M 8 72 
+         L 54 26 
+         L 54 50 
+         C 54 55, 58 59, 63 59 
+         C 68 59, 72 55, 72 50 
+         L 72 8 
+         C 72 3.5, 68.5 0, 64 0 
+         L 22 0 
+         C 17 0, 13 4, 13 9 
+         C 13 14, 17 18, 22 18 
+         L 46 18 
+         L 0 64 
+         C -3 67, -3 72, 0 75 
+         C 3 78, 8 78, 11 75 
+         L 8 72 Z"
+      fill="url(#wishArrowGradient)"
+    />
+  </g>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="favGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b000b5" />
+      <stop offset="35%" stop-color="#9333ea" />
+      <stop offset="70%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="favArr" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#c026d3" />
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="#070a11" />
+
+  <!-- W -->
+  <path
+    d="M 6 10 
+       H 18 
+       L 26 48 
+       C 27 50, 28.5 52, 31 52 
+       C 33.5 52, 35 50, 36 47 
+       L 45 10 
+       H 54 
+       L 46 48 
+       C 43 56, 38 60, 31 60 
+       C 24 60, 19 55, 17 48 
+       L 11 18 
+       H 6 Z"
+    fill="url(#favGrad)"
+  />
+
+  <!-- Arrow ↗ -->
+  <path
+    d="M 50 18 L 59 9 M 59 9 L 53 9 M 59 9 L 59 15"
+    stroke="url(#favArr)"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
