@@ -30,6 +30,7 @@ import { HistoryModal } from './components/HistoryModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WishLogo } from './components/WishLogo';
 import { extractTestSnippet, cleanNarrationText } from './utils/textParser';
+import { generateClientSpeech } from './utils/browserTTS';
 import { getAllHistory, saveHistoryItem, deleteHistoryItem, clearAllHistory } from './utils/storage';
 
 export default function App() {
@@ -148,29 +149,63 @@ export default function App() {
         setTimeout(() => setGeneratingPhase('Sintetizando áudio neural com Gemini TTS...'), 2400);
       }
 
-      const response = await fetch('/api/generate-speech', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-gemini-key': apiKey,
-        },
-        body: JSON.stringify({
-          text: textToSpeak,
-          direction,
-          voice: voiceSettings.voice,
-          model: voiceSettings.model,
-          language: voiceSettings.language,
-          speed: voiceSettings.speed,
-          intensity: voiceSettings.intensity,
-          expressiveness: voiceSettings.expressiveness,
-          pauseStyle: voiceSettings.pauseStyle,
-        }),
-      });
+      let data: any = null;
+      let serverError: string | null = null;
 
-      const data = await response.json();
+      try {
+        const response = await fetch('/api/generate-speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-gemini-key': apiKey,
+          },
+          body: JSON.stringify({
+            text: textToSpeak,
+            direction,
+            voice: voiceSettings.voice,
+            model: voiceSettings.model,
+            language: voiceSettings.language,
+            speed: voiceSettings.speed,
+            intensity: voiceSettings.intensity,
+            expressiveness: voiceSettings.expressiveness,
+            pauseStyle: voiceSettings.pauseStyle,
+          }),
+        });
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || data.details || 'Falha ao processar síntese de voz na IA.');
+        const rawText = await response.text();
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          serverError = rawText ? `Servidor: ${rawText.slice(0, 120)}` : 'Resposta não JSON do servidor';
+        }
+
+        if (!response.ok || !data?.success) {
+          serverError = data?.error || data?.details || serverError || `Falha na requisição (Status ${response.status})`;
+        }
+      } catch (networkErr: any) {
+        serverError = networkErr?.message || 'Falha de conexão com a API.';
+      }
+
+      // If server route failed, but user provided an API key in settings, execute direct client synthesis
+      if ((!data || !data.success) && apiKey) {
+        try {
+          data = await generateClientSpeech({
+            apiKey,
+            text: textToSpeak,
+            direction,
+            voice: voiceSettings.voice,
+            model: voiceSettings.model,
+            language: voiceSettings.language,
+            speed: voiceSettings.speed,
+            intensity: voiceSettings.intensity,
+            expressiveness: voiceSettings.expressiveness,
+            pauseStyle: voiceSettings.pauseStyle,
+          });
+        } catch (clientErr: any) {
+          throw new Error(clientErr?.message || serverError || 'Falha ao processar síntese vocal.');
+        }
+      } else if (!data || !data.success) {
+        throw new Error(serverError || 'Falha ao processar síntese de voz na IA.');
       }
 
       const versionNum = sessionVersions.length + 1;

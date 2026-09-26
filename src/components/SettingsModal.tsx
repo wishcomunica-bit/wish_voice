@@ -52,17 +52,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         },
         body: JSON.stringify({ apiKey: inputKey.trim() || apiKey }),
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      let data: any = null;
+      try {
+        const text = await res.text();
+        data = JSON.parse(text);
+      } catch {
+        // Fallback or non-JSON server error
+      }
+
+      if (res.ok && data && data.success) {
         setTestResult({
           success: true,
           latencyMs: data.latencyMs,
           message: `Conexão bem-sucedida! Latência: ${data.latencyMs}ms. Áudio PCM gerado com sucesso.`,
         });
       } else {
+        const keyToUse = inputKey.trim() || apiKey;
+        if (keyToUse) {
+          // Direct client test fallback
+          try {
+            const { GoogleGenAI } = await import('@google/genai');
+            const ai = new GoogleGenAI({ apiKey: keyToUse });
+            const start = Date.now();
+            await ai.models.generateContent({
+              model: selectedModel,
+              contents: [{ role: 'user', parts: [{ text: 'Teste' }] }],
+            });
+            const latency = Date.now() - start;
+            setTestResult({
+              success: true,
+              latencyMs: latency,
+              message: `Conexão direta estabelecida com sucesso! (${latency}ms)`,
+            });
+            return;
+          } catch (clientErr: any) {
+            setTestResult({
+              success: false,
+              message: clientErr?.message || 'Falha ao validar a chave Gemini.',
+            });
+            return;
+          }
+        }
+
         setTestResult({
           success: false,
-          message: data.error || 'Falha ao validar a conexão com a API Gemini.',
+          message: data?.error || 'Falha ao validar conexão com o serviço Gemini TTS. Verifique a chave de API.',
         });
       }
     } catch (err: any) {
